@@ -9,6 +9,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SwitchCompat
 import androidx.core.content.ContextCompat
 import com.acevizli.traffictunes.ble.BLEAdvertiser
 import com.acevizli.traffictunes.ble.BLEScanner
@@ -19,8 +20,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var scanner: BLEScanner
     private lateinit var advertiser: BLEAdvertiser
     private lateinit var txtSongInfo: TextView
-    private lateinit var btnStartScan: Button
-    private lateinit var btnStartAdvertise: Button
+    private lateinit var switchScan: SwitchCompat
+    private lateinit var switchAdvertise: SwitchCompat
+    private val detectedDevices = mutableMapOf<String, String>() // ✅ Store device -> song info
 
     // ✅ Register permission launcher before onCreate
     private val permissionLauncher = registerForActivityResult(
@@ -32,72 +34,92 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "Permissions denied!", Toast.LENGTH_SHORT).show()
         }
     }
+    private fun addDevice(deviceName: String, songInfo: String) {
+        detectedDevices[deviceName] = songInfo // ✅ Store device -> song mapping
+        updateUI()
+    }
+
+    // ✅ Update UI to display all detected devices and their music
+    private fun updateUI() {
+        val displayText = detectedDevices.entries.joinToString("\n") { (device, song) ->
+            "🎶 $device: $song"
+        }
+        txtSongInfo.text = displayText // ✅ Show all devices and their music in UI
+    }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         txtSongInfo = findViewById(R.id.txtSongInfo)
-        btnStartScan = findViewById(R.id.btnStartScan)
-        btnStartAdvertise = findViewById(R.id.btnStartAdvertise)
+        switchScan = findViewById(R.id.switchScan)
+        switchAdvertise = findViewById(R.id.switchAdvertise)
 
         if (!BLEHelper.isBluetoothSupported(this)) {
             Toast.makeText(this, "Bluetooth LE not supported!", Toast.LENGTH_LONG).show()
             return
         }
 
-        scanner = BLEScanner(this) { songInfo ->
+        scanner = BLEScanner(this) { deviceName, songInfo ->
             runOnUiThread {
-                txtSongInfo.text = "Nearby: $songInfo"
+                addDevice(deviceName, songInfo) // ✅ Store the new device & song
             }
         }
         advertiser = BLEAdvertiser(this)
 
         // ✅ Request permissions on startup
-        requestBluetoothPermissions()
+        BLEHelper.requestBluetoothPermissions(permissionLauncher)
 
-        btnStartScan.setOnClickListener {
-            if (hasPermissions()) {
-                scanner.startScanning()
-            } else {
-                requestBluetoothPermissions()
+        switchScan.setOnClickListener {
+            if (!BLEHelper.isBluetoothEnabled(this)) {
+                BLEHelper.requestBluetoothEnable(this)  // ✅ Ask user to enable Bluetooth
+                switchScan.isChecked = false
+                return@setOnClickListener
+            }
+            if(!BLEHelper.isLocationEnabled(this)) {
+                BLEHelper.requestLocationEnable(this)
+                switchScan.isChecked = false
+                return@setOnClickListener
+            }
+            if(switchScan.isChecked) {
+                if (BLEHelper.hasBluetoothPermissions(this)) {
+                    scanner.startScanning()
+                } else {
+                    BLEHelper.requestBluetoothPermissions(permissionLauncher)
+                    switchScan.isChecked = false
+                }
+            }
+            else {
+                scanner.stopScanning()
             }
         }
 
-        btnStartAdvertise.setOnClickListener {
-            if (hasPermissions()) {
-                advertiser.startAdvertising("Song: Lose Yourself - Eminem")
-            } else {
-                requestBluetoothPermissions()
+        switchAdvertise.setOnClickListener {
+            if (!BLEHelper.isBluetoothEnabled(this)) {
+                BLEHelper.requestBluetoothEnable(this)  // ✅ Ask user to enable Bluetooth
+                switchAdvertise.isChecked = false
+                return@setOnClickListener
+            }
+            if(!BLEHelper.isLocationEnabled(this)) {
+                BLEHelper.requestLocationEnable(this)
+                switchAdvertise.isChecked = false
+                return@setOnClickListener
+            }
+
+            if(switchAdvertise.isChecked) {
+                if (BLEHelper.hasBluetoothPermissions(this)) {
+                    advertiser.startAdvertising("Lose Yourself - Eminem")
+                } else {
+                    switchAdvertise.isChecked = false
+                    BLEHelper.requestBluetoothPermissions(permissionLauncher)
+                }
+            }
+            else {
+                advertiser.stopAdvertising()
             }
         }
     }
 
-    private fun hasPermissions(): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) { // API 31+
-            ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED &&
-                    ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_ADVERTISE) == PackageManager.PERMISSION_GRANTED
-        } else { // API 30 and below
-            ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH) == PackageManager.PERMISSION_GRANTED &&
-                    ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_ADMIN) == PackageManager.PERMISSION_GRANTED
-        }
-    }
 
-    private fun requestBluetoothPermissions() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) { // API 31+
-            permissionLauncher.launch(
-                arrayOf(
-                    Manifest.permission.BLUETOOTH_SCAN,
-                    Manifest.permission.BLUETOOTH_ADVERTISE
-                )
-            )
-        } else { // API 30 and below
-            permissionLauncher.launch(
-                arrayOf(
-                    Manifest.permission.BLUETOOTH,
-                    Manifest.permission.BLUETOOTH_ADMIN
-                )
-            )
-        }
-    }
 }

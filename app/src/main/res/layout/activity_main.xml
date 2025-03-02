@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -18,22 +19,20 @@
         android:gravity="center"
         android:padding="16dp"/>
 
-    <!-- Start BLE Scanning Button -->
-    <Button
-        android:id="@+id/btnStartScan"
+    <!-- BLE Scanning Switch -->
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/switchScan"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Start Scanning"
-        android:padding="10dp"
-        android:layout_marginTop="20dp"/>
+        android:text="Enable Scanning"
+        app:useMaterialThemeColors="true" />
 
-    <!-- Start BLE Advertising Button -->
-    <Button
-        android:id="@+id/btnStartAdvertise"
+    <!-- BLE Advertising Switch -->
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/switchAdvertise"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Start Advertising"
-        android:padding="10dp"
-        android:layout_marginTop="10dp"/>
+        android:text="Enable Advertising"
+        app:useMaterialThemeColors="true" />
 
 </LinearLayout>
