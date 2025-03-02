@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="16dp">
+
+    <!-- TextView to Display Nearby Songs -->
+    <TextView
+        android:id="@+id/txtSongInfo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="No songs detected"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:padding="16dp"/>
+
+    <!-- Start BLE Scanning Button -->
+    <Button
+        android:id="@+id/btnStartScan"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Start Scanning"
+        android:padding="10dp"
+        android:layout_marginTop="20dp"/>
+
+    <!-- Start BLE Advertising Button -->
+    <Button
+        android:id="@+id/btnStartAdvertise"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Start Advertising"
+        android:padding="10dp"
+        android:layout_marginTop="10dp"/>
+
+</LinearLayout>
